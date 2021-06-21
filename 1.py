@@ -15,11 +15,11 @@ import glob
 
 
 
-pathes = ""
+
 
 def preImg(img):
         #img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
         img = cv2.resize(img,dsize=(224,224))
         
         return img
@@ -34,31 +34,24 @@ def loadData():
         # _ : datasetSky2, brand : sunset, fn : fileName
         # tiền xử lý Dl
         img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-        img = preImg(img)
-        
+        img = cv2.resize(img,dsize=(224,224))
         fileName.append(path)
         # trich rút đặc trung
         features = featueVector(img)
         # gán nhãn cho data
         data.append(features)
         labels.append(brand)
-
- print(" load data complete.........")
- 
- #chuẩn hóa labels về dạng số
-#  le = LabelEncoder()
-#  target = le.fit_transform(labels)
-
+#  import seaborn as sns
+#  plt.figure(figsize=(9,7))
+#  plt.style.use("fivethirtyeight")
+#  sns.countplot(labels)
+#  plt.show()
  return data,labels,fileName
 
 
 def writeData(str,data,target,fileName):
 #     data,target,fileName = loadData()
-    print(type(target),len(data),len(fileName))
-
-
-
+ #   print(type(target),len(data),len(fileName))
 
     dataFrame = []
     for item in range(len(data)):
@@ -66,15 +59,15 @@ def writeData(str,data,target,fileName):
     # arr.append(data[item])
         for i in data[item]:
             arr.append(i)
-        
-
+    
         arr.append(target[item])
         arr.append(fileName[item])
         dataFrame.append(arr)
 
     #print(dataFrame[0:10])
 
-    df = pd.DataFrame(dataFrame,columns= ['Trung bình B', 'Trung bình G','Trung bình R',"Độ lệch chuẩn B","Độ lệch chuẩn G","Độ lệch chuẩn R","Nhãn",'URL'])
+    df = pd.DataFrame(dataFrame,columns= ['Trung bình B', 'Trung bình G',
+    'Trung bình R',"Độ lệch chuẩn B","Độ lệch chuẩn G","Độ lệch chuẩn R","Nhãn",'URL'])
     df.to_csv (str,index = False, header=True,encoding='utf_8_sig')
     print("write data compelete...")
     
@@ -97,54 +90,43 @@ def featueVector(img):
         mean,std = cv2.meanStdDev(img)
         features = np.concatenate([mean, std]).flatten()
         return features
-"""      
-        B, G, R = cv2.split(img)
+        # B, G, R = cv2.split(img)
 
-        tb1 =np.sum(B)/(img.shape[0]*img.shape[1])
-        tb2 =np.sum(G)/(img.shape[0]*img.shape[1])
-        tb3 =np.sum(R)/(img.shape[0]*img.shape[1])
-        # print('sum G = ',tb2)
-        # print('sum B = ',tb1)
-        # print('sum R = ',tb3)
-        feature = []
-        feature.append(tb1)
-        feature.append(tb2)
-        feature.append(tb3)
-        sum=0
-        sum2=0
-        sum1=0
-        #print(G.shape)
-        G=G.flatten()
-        #print(G[0])
-        for i in G:
-                sum += ((i-tb2)*(i-tb2))
-        # print(i)
-        #   break
-        SSG= sum/(img.shape[0]*img.shape[1]-1)
-        #print(np.sqrt(SSG))
+        # tb1 =np.sum(B)/(img.shape[0]*img.shape[1])
+        # tb2 =np.sum(G)/(img.shape[0]*img.shape[1])
+        # tb3 =np.sum(R)/(img.shape[0]*img.shape[1])
 
-        #print(B.shape)
-        B=B.flatten()
-        #print(G[0])
-        for i in B:
-                sum1 += ((i-tb1)*(i-tb1))
-        SSB= sum1/(img.shape[0]*img.shape[1]-1)
-        #print(np.sqrt(SSB))
+        # feature = []
+        # feature.append(tb1)
+        # feature.append(tb2)
+        # feature.append(tb3)
+        # sum=0
+        # sum2=0
+        # sum1=0
 
-        
-        R=R.flatten()
-        for i in R:
-                sum2 += ((i-tb3)*(i-tb3))
-        SSR= sum2/(img.shape[0]*img.shape[1]-1)
-        #print(np.sqrt(SSR))
+        # G=G.flatten()
 
-        feature.append(np.sqrt(SSB))
-        feature.append(np.sqrt(SSG))
-        feature.append(np.sqrt(SSR))
-        #print(tong)
+        # for i in G:
+        #         sum += ((i-tb2)*(i-tb2))
 
-        return feature
-"""
+        # SSG= sum/(img.shape[0]*img.shape[1]-1)
+
+        # B=B.flatten()
+
+        # for i in B:
+        #         sum1 += ((i-tb1)*(i-tb1))
+        # SSB= sum1/(img.shape[0]*img.shape[1]-1)       
+        # R=R.flatten()
+        # for i in R:
+        #         sum2 += ((i-tb3)*(i-tb3))
+        # SSR= sum2/(img.shape[0]*img.shape[1]-1)
+
+        # feature.append(np.sqrt(SSB))
+        # feature.append(np.sqrt(SSG))
+        # feature.append(np.sqrt(SSR))
+
+        # return feature
+
 
 def calcDistancs(pointA, pointB, numOfFeature=6):
     tmp = 0
@@ -160,36 +142,33 @@ def kNearestNeighbor(trainSet, point, k):
             "value": calcDistancs(item, point), # get valude dist
             "fileName" : item[-1]
         }) 
-    # thudc list cac dict gom key = label, value = dist
+    # thuoc list cac dict gom key = label, value = dist
     distances.sort(key=lambda x: x["value"]) # sort Asc by value
 
 
     labels = [item["label"] for item in distances] # duyet list da sort lay ra k label
     fileNames = [item["fileName"] for item in distances]
-    #print(fileNames[:k])
-    return labels[:k],fileNames[:k] # return k point nearlest
+    dist = [item["value"] for item in distances]
+    print(dist[:k])
+    return labels[:k],fileNames[:k] # return k point nearest
 
 def findMostOccur(arr): # arr is list k  first labels
    
-    print("cac nhan ",arr)
+    print("label  ",arr)
     labels = set(arr) # filter key only == set in java
     print(' ',labels)
     ans = ""
     maxOccur = 0
     for label in labels:
         num = arr.count(label) # dem so phan tu value == label in arr
-        print("sum", num)
+        print(label , " = ", num)
         if num > maxOccur:
             maxOccur = num
             ans = label
     return ans
 
 def fit(x):
-        #x = openfilename()
- #nameFile =  simpledialog.askstring(title="Title",prompt="Nhap duong dan model ")
-                
- #if nameFile is not None and nameFile != ''  :
- 
+
         try:
 
                 train,test= readData(x)
@@ -217,10 +196,10 @@ def predict(img,train):
     
     knn,knn1 = kNearestNeighbor(train,featue,5)
     answer = findMostOccur(knn)
-    print(answer,knn1[0])
+    print(answer,knn1)
     anh_like = knn1[0]
     return answer,knn1[0]
-new_str = "load data complete........."
+
 def saveFeature():
       
         data,target,fileName = loadData()
@@ -283,11 +262,14 @@ def open_img():
     # doc anh 
     image = mpimg.imread(x)
     print('Moi nhan dạng')
-
-
     train,test= readData("export_dataframe.csv")
-    str,img_Like = predict(image,train)
-    res = Label(root,text=" Đây là ảnh  -- "+ str  ).grid( row = 4, columnspan = 4)
+    arrData = []
+    arrData = np.array(train)
+    arrData = np.append(arrData,test,axis = 0)
+    print("*"*30)
+    print(arrData.shape)
+    str,img_Like = predict(image,arrData)
+    res = Label(root,text=" Ảnh dự đoán- "+ str  ).grid( row = 4, columnspan = 4)
 
 def markCenter(root):
   root.update_idletasks()
@@ -318,9 +300,6 @@ root.resizable(height=True,width=True)
 root.minsize(height=500,width=500)
 
 btnfeature = Button(root,text ="Train model", command = saveFeature).grid( row = 1, columnspan = 4)
-
-# btnTrain = Button(root,text ="Training", command = fit).grid( row = 5, columnspan = 4)
-
 
 btnpredict = Button(root,text ="open image", command = open_img).grid( row = 9, columnspan = 4)
 
